@@ -1,0 +1,291 @@
+import cv2 #line:1:import cv2
+import numpy as np #line:2:import numpy as np
+import pyautogui #line:3:import pyautogui
+import keyboard #line:4:import keyboard
+import time #line:5:import time
+import os #line:6:import os
+import threading #line:7:import threading
+import ctypes #line:8:import ctypes
+import mss #line:9:import mss
+import mss .tools #line:10:import mss.tools
+import sv_ttk #line:11:import sv_ttk
+from tkinter import ttk #line:12:from tkinter import ttk
+import tkinter as tk #line:13:import tkinter as tk
+from tkinter import filedialog #line:14:from tkinter import filedialog
+import json #line:15:import json
+triggerbot_enabled =False #line:17:triggerbot_enabled = False
+fov_enabled =False #line:18:fov_enabled = False
+trigger_key =None #line:19:trigger_key = None
+fps1 =0 #line:20:fps1 = 0
+last_pixel_sum =0 #line:21:last_pixel_sum = 0
+shot_delay =0 #line:22:shot_delay = 0
+anti_recoil_enabled =False #line:23:anti_recoil_enabled = False
+only_when_ads_enabled =False #line:24:only_when_ads_enabled = False
+VK_LBUTTON =0x01 #line:25:VK_LBUTTON = 0x01
+VK_RBUTTON =0x02 #line:26:VK_RBUTTON = 0x02
+x_recoil =0 #line:27:x_recoil = 0
+y_recoil =20 #line:28:y_recoil = 20
+strength =0.0001 #line:29:strength = 0.0001
+def capture_screen (O0000OOO00OO0O0O0 ,O0OOO00000O00O0OO ,O0OOOOOO00O00OOOO ,OOO000OO0000OO000 ):#line:31:def capture_screen(fov_x, fov_y, fov_size, img_buffer):
+    with mss .mss ()as O0O0OO0OOO0O0O00O :#line:32:with mss.mss() as sct:
+        O000000000OO0O0O0 ={"top":O0OOO00000O00O0OO ,"left":O0000OOO00OO0O0O0 ,"width":O0OOOOOO00O00OOOO ,"height":O0OOOOOO00O00OOOO }#line:33:monitor = {"top": fov_y, "left": fov_x, "width": fov_size, "height": fov_size}
+        while True :#line:34:while True:
+            O000O0000O000000O =np .array (O0O0OO0OOO0O0O00O .grab (O000000000OO0O0O0 ))#line:35:img = np.array(sct.grab(monitor))
+            OOO000OO0000OO000 [:]=cv2 .cvtColor (O000O0000O000000O ,cv2 .COLOR_BGR2RGB )#line:36:img_buffer[:] = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+def triggerbot ():#line:38:def triggerbot():
+    global fov_enabled ,trigger_key ,fps1 ,last_pixel_sum #line:39:global fov_enabled, trigger_key, fps1, last_pixel_sum
+    print ('Cheat is running...')#line:40:print('Cheat is running...')
+    OOOOO0O00OO000OOO =int (round (time .time ()*1000 ))#line:41:tm = int(round(time.time() * 1000))
+    O000OO0O00000O000 =1 #line:42:fps = 1
+    last_pixel_sum =None #line:43:last_pixel_sum = None
+    OO0000OO00OO0O00O =False #line:44:shot_fired = False
+    OOO0O00OO00OO00O0 ,O00OOOOO000O000O0 =pyautogui .size ()#line:46:screen_width, screen_height = pyautogui.size()
+    O0OOOOO00OO0OOO00 =25 #line:47:fov_size = 25
+    OO0000OOO00OO00O0 =(OOO0O00OO00OO00O0 -O0OOOOO00OO0OOO00 )//2 #line:48:fov_x = (screen_width - fov_size) // 2
+    O0OO0O0OOOO00O00O =(O00OOOOO000O000O0 -O0OOOOO00OO0OOO00 )//2 #line:49:fov_y = (screen_height - fov_size) // 2
+    O0OOO00O00OO00OOO =np .zeros ((O0OOOOO00OO0OOO00 ,O0OOOOO00OO0OOO00 ,3 ),dtype =np .uint8 )#line:51:img_buffer = np.zeros((fov_size, fov_size, 3), dtype=np.uint8)
+    O0OOO00O00O0OOOOO =threading .Thread (target =capture_screen ,args =(OO0000OOO00OO00O0 ,O0OO0O0OOOO00O00O ,O0OOOOO00OO0OOO00 ,O0OOO00O00OO00OOO ))#line:53:screen_thread = threading.Thread(target=capture_screen, args=(fov_x, fov_y, fov_size, img_buffer))
+    O0OOO00O00O0OOOOO .daemon =True #line:54:screen_thread.daemon = True
+    O0OOO00O00O0OOOOO .start ()#line:55:screen_thread.start()
+    while True :#line:57:while True:
+        O0OOOOOO0OO000O0O =O0OOO00O00OO00OOO .copy ()#line:58:img = img_buffer.copy()
+        OOO0OOO0000OO0O0O =np .array (O0OOOOOO0OO000O0O ).sum (dtype =np .int64 )#line:59:current_pixel_sum = np.array(img).sum(dtype=np.int64)
+        if triggerbot_enabled and trigger_key is not None and keyboard .is_pressed (trigger_key ):#line:61:if triggerbot_enabled and trigger_key is not None and keyboard.is_pressed(trigger_key):
+            if last_pixel_sum is not None and not OO0000OO00OO0O00O :#line:62:if last_pixel_sum is not None and not shot_fired:
+                OO00000O00OOO0OOO =abs (OOO0OOO0000OO0O0O -last_pixel_sum )#line:63:color_change = abs(current_pixel_sum - last_pixel_sum)
+                if OO00000O00OOO0OOO >=7000 :#line:64:if color_change >= 7000:
+                    time .sleep (shot_delay /1000 )#line:65:time.sleep(shot_delay / 1000)
+                    ctypes .windll .user32 .mouse_event (2 ,0 ,0 ,0 ,0 )#line:66:ctypes.windll.user32.mouse_event(2, 0, 0, 0, 0)
+                    print (f'Shooting... (CV: {str(OOO0OOO0000OO0O0O)}) ({shot_delay} ms)')#line:67:print(f'Shooting... (CV: {str(current_pixel_sum)}) ({shot_delay} ms)')
+                    time .sleep (0.15 )#line:68:time.sleep(0.15)
+                    ctypes .windll .user32 .mouse_event (4 ,0 ,0 ,0 ,0 )#line:69:ctypes.windll.user32.mouse_event(4, 0, 0, 0, 0)
+                    OO0000OO00OO0O00O =True #line:70:shot_fired = True
+            last_pixel_sum =OOO0OOO0000OO0O0O #line:71:last_pixel_sum = current_pixel_sum
+        else :#line:72:else:
+            last_pixel_sum =None #line:73:last_pixel_sum = None
+            OO0000OO00OO0O00O =False #line:74:shot_fired = False
+        if int (round (time .time ()*1000 ))-OOOOO0O00OO000OOO >1000 :#line:76:if int(round(time.time() * 1000)) - tm > 1000:
+            fps1 =O000OO0O00000O000 #line:77:fps1 = fps
+            OOOOO0O00OO000OOO =int (round (time .time ()*1000 ))#line:78:tm = int(round(time.time() * 1000))
+            O000OO0O00000O000 =0 #line:79:fps = 0
+        O000OO0O00000O000 +=1 #line:80:fps += 1
+        OOOOOOO0O0OOO00OO =200.0 /O0OOOOOO0OO000O0O .shape [1 ]#line:82:r = 200.0 / img.shape[1]
+        O0OOO00OOOO0000O0 =(200 ,int (O0OOOOOO0OO000O0O .shape [0 ]*OOOOOOO0O0OOO00OO ))#line:83:dim = (200, int(img.shape[0] * r))
+        O0OOOOOO0OO000O0O =cv2 .resize (O0OOOOOO0OO000O0O ,O0OOO00OOOO0000O0 ,interpolation =cv2 .INTER_AREA )#line:84:img = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+        if fov_enabled :#line:86:if fov_enabled:
+            cv2 .imshow ("Viewer",O0OOOOOO0OO000O0O )#line:87:cv2.imshow("Viewer", img)
+        else :#line:88:else:
+            cv2 .destroyAllWindows ()#line:89:cv2.destroyAllWindows()
+        if cv2 .waitKey (1 )==ord ("q"):#line:91:if cv2.waitKey(1) == ord("q"):
+            pass #line:92:pass
+        os .system (f'title Nixius Universal Cheat')#line:94:os.system(f'title Nixius Universal Cheat')
+def anti_recoil ():#line:96:def anti_recoil():
+    while True :#line:97:while True:
+        if anti_recoil_enabled and ctypes .windll .user32 .GetAsyncKeyState (VK_LBUTTON ):#line:98:if anti_recoil_enabled and ctypes.windll.user32.GetAsyncKeyState(VK_LBUTTON):
+            if only_when_ads_enabled and ctypes .windll .user32 .GetAsyncKeyState (VK_RBUTTON ):#line:99:if only_when_ads_enabled and ctypes.windll.user32.GetAsyncKeyState(VK_RBUTTON):
+                ctypes .windll .user32 .mouse_event (0x0001 ,x_recoil ,y_recoil ,0 ,0 )#line:100:ctypes.windll.user32.mouse_event(0x0001, x_recoil, y_recoil, 0, 0)
+            elif not only_when_ads_enabled :#line:101:elif not only_when_ads_enabled:
+                ctypes .windll .user32 .mouse_event (0x0001 ,x_recoil ,y_recoil ,0 ,0 )#line:102:ctypes.windll.user32.mouse_event(0x0001, x_recoil, y_recoil, 0, 0)
+        time .sleep (strength )#line:103:time.sleep(strength)
+def main ():#line:105:def main():
+    OOO00O00O0O00OO00 =threading .Thread (target =triggerbot )#line:106:trigger_thread = threading.Thread(target=triggerbot)
+    OOO00O00O0O00OO00 .start ()#line:107:trigger_thread.start()
+    O0000O00O00OO000O =threading .Thread (target =anti_recoil )#line:108:anti_recoil_thread = threading.Thread(target=anti_recoil)
+    O0000O00O00OO000O .start ()#line:109:anti_recoil_thread.start()
+def main_gui ():#line:111:def main_gui():
+    def OO000O0O0O00O0O00 (OOO00OO0O000O00OO ):#line:112:def move_window(event):
+        global xgui ,ygui #line:113:global xgui, ygui
+        if OOO00OO0O000O00OO .y_root <O000OOOOO0OO0OO00 .winfo_y ()+40 :#line:114:if event.y_root < root.winfo_y() + 40:
+            O000OOOOO0OO0OO00 .geometry (f"+{OOO00OO0O000O00OO.x_root - xgui}+{OOO00OO0O000O00OO.y_root - ygui}")#line:115:root.geometry(f"+{event.x_root - xgui}+{event.y_root - ygui}")
+    def OO00000OOOO0OOOO0 (OOO000OOOO0OOOOO0 ):#line:117:def start_move(event):
+        global xgui ,ygui #line:118:global xgui, ygui
+        xgui =OOO000OOOO0OOOOO0 .x_root -O000OOOOO0OO0OO00 .winfo_x ()#line:119:xgui = event.x_root - root.winfo_x()
+        ygui =OOO000OOOO0OOOOO0 .y_root -O000OOOOO0OO0OO00 .winfo_y ()#line:120:ygui = event.y_root - root.winfo_y()
+    def O0OO00O0O000O0OO0 ():#line:122:def close_window():
+        O000OOOOO0OO0OO00 .destroy ()#line:123:root.destroy()
+        os ._exit (0 )#line:124:os._exit(0)
+    def O0O0O000OOO00OOOO ():#line:126:def update_triggerbot_state():
+        global triggerbot_enabled #line:127:global triggerbot_enabled
+        triggerbot_enabled =O0OO0OOOOO0O0OO0O .get ()#line:128:triggerbot_enabled = trigger_checkbox_var.get()
+    def O0OO000O000O0OOOO ():#line:130:def update_fov_state():
+        global fov_enabled #line:131:global fov_enabled
+        fov_enabled =OO0O0OOO00OO0O00O .get ()#line:132:fov_enabled = fov_checkbox_var.get()
+    def O0OO0O0O00O0OOOO0 (O00O0OOO00O0O00O0 =None ):#line:134:def update_keybind_label(event=None):
+        nonlocal O0OO00000OO000OOO #line:135:nonlocal keybind_label_text
+        O0OO00000OO000OOO .set ("Listening...")#line:136:keybind_label_text.set("Listening...")
+        def OOO00OO0000OO0O00 ():#line:138:def listen_for_key():
+            O000O0000OOOOOO0O =keyboard .read_event ()#line:139:key = keyboard.read_event()
+            if O000O0000OOOOOO0O .event_type ==keyboard .KEY_DOWN :#line:140:if key.event_type == keyboard.KEY_DOWN:
+                O0OO00000OO000OOO .set (f"Keybind: {O000O0000OOOOOO0O.name}")#line:141:keybind_label_text.set(f"Keybind: {key.name}")
+                OOO0OO000OO000OO0 (O000O0000OOOOOO0O .scan_code )#line:142:update_trigger_key(key.scan_code)
+        threading .Thread (target =OOO00OO0000OO0O00 ).start ()#line:144:threading.Thread(target=listen_for_key).start()
+    def OOO0OO000OO000OO0 (OOOO00000O00OOO00 ):#line:146:def update_trigger_key(key_code):
+        global trigger_key #line:147:global trigger_key
+        trigger_key =OOOO00000O00OOO00 #line:148:trigger_key = key_code
+    def O000O000OO0OO0OOO ():#line:150:def update_fps_label():
+        global fps1 #line:151:global fps1
+        nonlocal OOOO0OOO00000OO00 #line:152:nonlocal fps_label_text
+        while True :#line:153:while True:
+            OOOO0OOO00000OO00 .set (f"FPS: {fps1}")#line:154:fps_label_text.set(f"FPS: {fps1}")
+            time .sleep (1 )#line:155:time.sleep(1)
+    def O0O0O0O0O0O00O00O ():#line:157:def update_color_value_label():
+        global last_pixel_sum #line:158:global last_pixel_sum
+        nonlocal O0O0O0OO00O000OO0 #line:159:nonlocal color_value_label_text
+        while True :#line:160:while True:
+            O0O0O0OO00O000OO0 .set (f"Color Value: {last_pixel_sum}")#line:161:color_value_label_text.set(f"Color Value: {last_pixel_sum}")
+            time .sleep (0.1 )#line:162:time.sleep(0.1)
+    def OOOO00OOOOOOOO00O (O0O0000O0O00O00O0 =None ):#line:164:def update_shot_delay(event=None):
+        global shot_delay #line:165:global shot_delay
+        shot_delay =round (OOOOO00OO00OOO00O .get ()/5 )*5 #line:166:shot_delay = round(shot_delay_slider.get() / 5) * 5
+        O0O0000O0000O0000 .config (text =f"{shot_delay} ms")#line:167:shot_delay_value_label.config(text=f"{shot_delay} ms")
+    def OOO00O0O0O0O00OOO (OOOOO000O000OOOO0 =None ):#line:169:def update_shot_delay_realtime(event=None):
+        global shot_delay #line:170:global shot_delay
+        shot_delay =round (OOOOO00OO00OOO00O .get ()/5 )*5 #line:171:shot_delay = round(shot_delay_slider.get() / 5) * 5
+        O0O0000O0000O0000 .config (text =f"{shot_delay} ms")#line:172:shot_delay_value_label.config(text=f"{shot_delay} ms")
+    def OOO0OOOOO00O00OO0 ():#line:174:def update_anti_recoil_state():
+        global anti_recoil_enabled #line:175:global anti_recoil_enabled
+        anti_recoil_enabled =O0O00OOOO0O0O000O .get ()#line:176:anti_recoil_enabled = anti_recoil_checkbox_var.get()
+    def OO0OOOO0000O00O00 ():#line:178:def update_only_when_ads_state():
+        global only_when_ads_enabled #line:179:global only_when_ads_enabled
+        only_when_ads_enabled =O000OO0OOO00OO000 .get ()#line:180:only_when_ads_enabled = only_when_ads_checkbox_var.get()
+    def OO0O0000OO0O00OO0 (OOO00O00O0OO000OO ):#line:182:def update_y_recoil_value(value):
+        global y_recoil #line:183:global y_recoil
+        y_recoil =int (round (float (OOO00O00O0OO000OO )))#line:184:y_recoil = int(round(float(value)))
+        O00OOOOOOOO0O00O0 .config (text =f"{y_recoil} px")#line:185:y_recoil_value_label.config(text=f"{y_recoil} px")
+    def OO0OOO0O0000O0O00 (OO00O000OOO0O0000 ):#line:187:def update_strength_value(value):
+        global strength #line:188:global strength
+        strength =round (float (OO00O000OOO0O0000 )/1000 ,4 )+0.0001 #line:189:strength = round(float(value) / 1000, 4) + 0.0001
+        O0O000O000OO00O0O .config (text =f"{strength:.4f}")#line:190:strength_value_label.config(text=f"{strength:.4f}")
+    def O0OOO000OOO0OO0O0 (O000OOO0O00O0OO0O ):#line:192:def update_x_recoil_value(value):
+        global x_recoil #line:193:global x_recoil
+        x_recoil =int (float (O000OOO0O00O0OO0O ))#line:194:x_recoil = int(float(value))
+        OOO0OOO0000O0OO0O .config (text =f"{x_recoil} px")#line:195:x_recoil_value_label.config(text=f"{x_recoil} px")
+    def O00O0O00000000OOO ():#line:197:def load_config():
+        if not OO000OOOOO000OOO0 .curselection ():#line:198:if not file_listbox.curselection():
+            OOOOOOOO0O0OO0O0O .config (text ="No config selected")#line:199:config_loaded_label.config(text="No config selected")
+            return #line:200:return
+        O00OOOO0000000O0O =OO000OOOOO000OOO0 .get (OO000OOOOO000OOO0 .curselection ())#line:202:selected_file = file_listbox.get(file_listbox.curselection())
+        O00O0OOO0O0O0O00O =os .path .join ("RCS-Cfgs",O00OOOO0000000O0O )#line:203:selected_file_path = os.path.join("RCS-Cfgs", selected_file)
+        if not os .path .exists (O00O0OOO0O0O0O00O ):#line:204:if not os.path.exists(selected_file_path):
+            OOOOOOOO0O0OO0O0O .config (text =f"Config not found: {O00OOOO0000000O0O}")#line:205:config_loaded_label.config(text=f"Config not found: {selected_file}")
+            return #line:206:return
+        OOOOOOOO0O0OO0O0O .config (text =f"Config loaded: {O00OOOO0000000O0O}")#line:208:config_loaded_label.config(text=f"Config loaded: {selected_file}")
+        with open (O00O0OOO0O0O0O00O ,"r")as OOO0O00000OOOO0OO :#line:209:with open(selected_file_path, "r") as file:
+            O0O0O0O000OOOO0OO =json .load (OOO0O00000OOOO0OO )#line:210:config_data = json.load(file)
+            OO0OO0O0OO00O0O00 .set (O0O0O0O000OOOO0OO .get ("x",0 ))#line:211:x_recoil_slider.set(config_data.get("x", 0))
+            OO0OO000O0000O000 .set (O0O0O0O000OOOO0OO .get ("y",20 ))#line:212:y_recoil_slider.set(config_data.get("y", 20))
+            O0OO0OO00OO000OOO .set (O0O0O0O000OOOO0OO .get ("strength",0.0001 )*1000 )#line:213:strength_slider.set(config_data.get("strength", 0.0001) * 1000)
+    def OOOOO0000O0OO0OOO ():#line:215:def save_config():
+        OO0OO0OO0O0O00OOO =O000OOOOOO00O0OOO .get ()#line:216:filename = config_entry.get()
+        if OO0OO0OO0O0O00OOO :#line:217:if filename:
+            if not OO0OO0OO0O0O00OOO .endswith (".json"):#line:218:if not filename.endswith(".json"):
+                OO0OO0OO0O0O00OOO +=".json"#line:219:filename += ".json"
+            O000OO000O00OOOOO ={"x":x_recoil ,"y":y_recoil ,"strength":strength }#line:224:}
+            with open (f"RCS-Cfgs/{OO0OO0OO0O0O00OOO}","w")as O0000O00OOO0O00OO :#line:225:with open(f"RCS-Cfgs/{filename}", "w") as file:
+                json .dump (O000OO000O00OOOOO ,O0000O00OOO0O00OO )#line:226:json.dump(data, file)
+                OOOOO0O00O0O0OOOO ()#line:227:refresh_list()
+    def OOOOO0O00O0O0OOOO ():#line:229:def refresh_list():
+        OO000OOOOO000OOO0 .delete (0 ,tk .END )#line:230:file_listbox.delete(0, tk.END)
+        OO0OO0OO0OO00OO00 =os .listdir ("RCS-Cfgs")#line:231:files = os.listdir("RCS-Cfgs")
+        for O00OO00OO0O0OO0OO in OO0OO0OO0OO00OO00 :#line:232:for file in files:
+            if O00OO00OO0O0OO0OO .endswith (".json"):#line:233:if file.endswith(".json"):
+                OO000OOOOO000OOO0 .insert (tk .END ,O00OO00OO0O0OO0OO )#line:234:file_listbox.insert(tk.END, file)
+    if not os .path .exists ("RCS-Cfgs"):#line:236:if not os.path.exists("RCS-Cfgs"):
+        os .makedirs ("RCS-Cfgs")#line:237:os.makedirs("RCS-Cfgs")
+    O000OOOOO0OO0OO00 =tk .Tk ()#line:239:root = tk.Tk()
+    O000OOOOO0OO0OO00 .title ("Nixius Universal Cheat")#line:240:root.title("Nixius Universal Cheat")
+    O000OOOOO0OO0OO00 .overrideredirect (True )#line:241:root.overrideredirect(True)
+    O000OOOOO0OO0OO00 .attributes ("-transparentcolor","white")#line:242:root.attributes("-transparentcolor", "white")
+    O000OOOOO0OO0OO00 .attributes ("-topmost",True )#line:243:root.attributes("-topmost", True)
+    O00O000O0OOO0000O =O000OOOOO0OO0OO00 .winfo_screenwidth ()#line:245:screen_width = root.winfo_screenwidth()
+    O0O0O0O0OOOOOO0O0 =O000OOOOO0OO0OO00 .winfo_screenheight ()#line:246:screen_height = root.winfo_screenheight()
+    OO0OOOO000OOO000O =500 #line:247:window_width = 500
+    O000000OO0O0O00O0 =325 #line:248:window_height = 325
+    OOOOO0OO0000O00OO =(O00O000O0OOO0000O -OO0OOOO000OOO000O )//2 #line:249:xgui = (screen_width - window_width) // 2
+    OO0OO00000OOOO000 =(O0O0O0O0OOOOOO0O0 -O000000OO0O0O00O0 )//2 #line:250:ygui = (screen_height - window_height) // 2
+    O000OOOOO0OO0OO00 .geometry (f"{OO0OOOO000OOO000O}x{O000000OO0O0O00O0}+{OOOOO0OO0000O00OO}+{OO0OO00000OOOO000}")#line:251:root.geometry(f"{window_width}x{window_height}+{xgui}+{ygui}")
+    sv_ttk .set_theme ("dark")#line:253:sv_ttk.set_theme("dark")
+    O0OO00O0O0O00OO0O =tk .Label (O000OOOOO0OO0OO00 ,text =f"Nixius Universal Cheat")#line:255:name_label = tk.Label(root, text=f"Nixius Universal Cheat")
+    O0OO00O0O0O00OO0O .pack (side ="top",padx =10 ,pady =10 ,anchor ="nw")#line:256:name_label.pack(side="top", padx=10, pady=10, anchor="nw")
+    OOOO0O00OO0OOOO0O =ttk .Notebook (O000OOOOO0OO0OO00 )#line:258:tab_control = ttk.Notebook(root)
+    OOOO0O00OO0OOOO0O .pack (expand =1 ,fill ="both",side ="right")#line:259:tab_control.pack(expand=1, fill="both", side="right")
+    OOO00O000000OOO00 =ttk .Frame (OOOO0O00OO0OOOO0O )#line:261:trigger_tab = ttk.Frame(tab_control)
+    OOOO0O00OO0OOOO0O .add (OOO00O000000OOO00 ,text ="Triggerbot")#line:262:tab_control.add(trigger_tab , text="Triggerbot")
+    O0OO0OOOOO0O0OO0O =tk .BooleanVar (value =False )#line:264:trigger_checkbox_var = tk.BooleanVar(value=False)
+    OOO00OOO00OOOOO0O =ttk .Checkbutton (OOO00O000000OOO00 ,text ="Pixel Triggerbot",variable =O0OO0OOOOO0O0OO0O ,command =O0O0O000OOO00OOOO )#line:265:trigger_checkbox = ttk.Checkbutton(trigger_tab, text="Pixel Triggerbot", variable=trigger_checkbox_var, command=update_triggerbot_state)
+    OOO00OOO00OOOOO0O .place (relx =0.01 ,rely =0.1 ,anchor ="w")#line:266:trigger_checkbox.place(relx=0.01, rely=0.1, anchor="w")
+    OO0O0OOO00OO0O00O =tk .BooleanVar (value =False )#line:268:fov_checkbox_var = tk.BooleanVar(value=False)
+    OO00O00OOO0OOO0OO =ttk .Checkbutton (OOO00O000000OOO00 ,text ="Pixel Viewer",variable =OO0O0OOO00OO0O00O ,command =O0OO000O000O0OOOO )#line:269:fov_checkbox = ttk.Checkbutton(trigger_tab, text="Pixel Viewer", variable=fov_checkbox_var, command=update_fov_state)
+    OO00O00OOO0OOO0OO .place (relx =0.01 ,rely =0.2 ,anchor ="w")#line:270:fov_checkbox.place(relx=0.01, rely=0.2, anchor="w")
+    O00O00000O00O0O0O =ttk .Button (OOO00O000000OOO00 ,text ="Set Keybind",command =O0OO0O0O00O0OOOO0 )#line:272:keybind_button = ttk.Button(trigger_tab, text="Set Keybind", command=update_keybind_label)
+    O00O00000O00O0O0O .place (relx =0.018 ,rely =0.33 ,anchor ="w")#line:273:keybind_button.place(relx=0.018, rely=0.33, anchor="w")
+    O0OO00000OO000OOO =tk .StringVar (value ="Keybind: None")#line:275:keybind_label_text = tk.StringVar(value="Keybind: None")
+    O0OO0OOO0O00O0O0O =ttk .Label (OOO00O000000OOO00 ,textvariable =O0OO00000OO000OOO )#line:276:keybind_label = ttk.Label(trigger_tab, textvariable=keybind_label_text)
+    O0OO0OOO0O00O0O0O .place (relx =0.230 ,rely =0.33 ,anchor ="w")#line:277:keybind_label.place(relx=0.230, rely=0.33, anchor="w")
+    ttk .Separator (OOO00O000000OOO00 ,orient ='horizontal').place (relx =0.0 ,rely =0.82 ,relwidth =1.0 )#line:279:ttk.Separator(trigger_tab, orient='horizontal').place(relx=0.0, rely=0.82, relwidth=1.0)
+    OOOO0OOO00000OO00 =tk .StringVar (value ="FPS: 0")#line:281:fps_label_text = tk.StringVar(value="FPS: 0")
+    OO0O0OO0O000OO000 =ttk .Label (OOO00O000000OOO00 ,textvariable =OOOO0OOO00000OO00 )#line:282:fps_label = ttk.Label(trigger_tab, textvariable=fps_label_text)
+    OO0O0OO0O000OO000 .place (relx =0.0 ,rely =0.88 ,anchor ="w")#line:283:fps_label.place(relx=0.0, rely=0.88, anchor="w")
+    O0O0O0OO00O000OO0 =tk .StringVar (value ="Color Value: 0")#line:285:color_value_label_text = tk.StringVar(value="Color Value: 0")
+    O00O00OOO0OO0O00O =ttk .Label (OOO00O000000OOO00 ,textvariable =O0O0O0OO00O000OO0 )#line:286:color_value_label = ttk.Label(trigger_tab, textvariable=color_value_label_text)
+    O00O00OOO0OO0O00O .place (relx =0.0 ,rely =0.95 ,anchor ="w")#line:287:color_value_label.place(relx=0.0, rely=0.95, anchor="w")
+    OOOOO00OO00OOO00O =ttk .Scale (OOO00O000000OOO00 ,from_ =0 ,to =500 ,orient =tk .HORIZONTAL ,length =150 )#line:289:shot_delay_slider = ttk.Scale(trigger_tab, from_=0, to=500, orient=tk.HORIZONTAL, length=150)
+    OOOOO00OO00OOO00O .place (relx =0.11 ,rely =0.46 ,anchor ="w")#line:290:shot_delay_slider.place(relx=0.11, rely=0.46, anchor="w")
+    OOOOO00OO00OOO00O .bind ("<ButtonRelease-1>",OOOO00OOOOOOOO00O )#line:291:shot_delay_slider.bind("<ButtonRelease-1>", update_shot_delay)
+    OOOOO00OO00OOO00O .bind ("<Motion>",OOO00O0O0O0O00OOO )#line:292:shot_delay_slider.bind("<Motion>", update_shot_delay_realtime)
+    ttk .Label (OOO00O000000OOO00 ,text ="Delay:",anchor ="e").place (relx =0.097 ,rely =0.45 ,anchor ="e")#line:294:ttk.Label(trigger_tab, text="Delay:", anchor="e").place(relx=0.097, rely=0.45, anchor="e")
+    O0O0000O0000O0000 =ttk .Label (OOO00O000000OOO00 ,text =f"{shot_delay} ms")#line:296:shot_delay_value_label = ttk.Label(trigger_tab, text=f"{shot_delay} ms")
+    O0O0000O0000O0000 .place (relx =0.43 ,rely =0.46 ,anchor ="w")#line:297:shot_delay_value_label.place(relx=0.43, rely=0.46, anchor="w")
+    OOO0O0O0OO0OO00O0 =ttk .Frame (OOOO0O00OO0OOOO0O )#line:299:antirecoil_tab = ttk.Frame(tab_control)
+    OOOO0O00OO0OOOO0O .add (OOO0O0O0OO0OO00O0 ,text ="Anti Recoil")#line:300:tab_control.add(antirecoil_tab , text="Anti Recoil")
+    OO0OOOO0000O000O0 =ttk .Notebook (OOO0O0O0OO0OO00O0 ,width =600 ,height =296 )#line:302:sub_tab_control = ttk.Notebook(antirecoil_tab, width=600, height=296)
+    OO0OOOO0000O000O0 .pack (expand =1 ,fill ="both",side ="right")#line:303:sub_tab_control.pack(expand=1, fill="both", side="right")
+    OO0OOOO0000O000O0 .place (relx =0.0001 ,rely =0.7 ,anchor ="w")#line:304:sub_tab_control.place(relx=0.0001, rely=0.7, anchor="w")
+    O00000OOO00000O0O =ttk .Frame (OO0OOOO0000O000O0 )#line:306:configuration_tab = ttk.Frame(sub_tab_control)
+    OO0OOOO0000O000O0 .add (O00000OOO00000O0O ,text ="Configuration")#line:307:sub_tab_control.add(configuration_tab, text="Configuration")
+    O0OOO000OO00O0O00 =ttk .Frame (OO0OOOO0000O000O0 )#line:309:cfgloader_tab = ttk.Frame(sub_tab_control)
+    OO0OOOO0000O000O0 .add (O0OOO000OO00O0O00 ,text ="Config Loader")#line:310:sub_tab_control.add(cfgloader_tab, text="Config Loader")
+    OO000OOOOO000OOO0 =tk .Listbox (O0OOO000OO00O0O00 ,width =82 ,height =8 ,selectmode =tk .SINGLE )#line:312:file_listbox = tk.Listbox(cfgloader_tab, width=82, height=8, selectmode=tk.SINGLE)
+    OO000OOOOO000OOO0 .grid (row =0 ,column =1 ,padx =(0 ,5 ),pady =5 ,sticky ="w")#line:313:file_listbox.grid(row=0, column=1, padx=(0,5), pady=5, sticky="w")
+    OOO00O00000OOO0O0 =ttk .Button (O0OOO000OO00O0O00 ,text ="Load",command =O00O0O00000000OOO )#line:315:load_button = ttk.Button(cfgloader_tab, text="Load", command=load_config)
+    OOO00O00000OOO0O0 .place (relx =0.01 ,rely =0.55 ,anchor ="w")#line:316:load_button.place(relx=0.01, rely=0.55, anchor="w")
+    O00O0O0000OOOOOOO =ttk .Button (O0OOO000OO00O0O00 ,text ="Refresh",command =OOOOO0O00O0O0OOOO )#line:318:refrest_button = ttk.Button(cfgloader_tab, text="Refresh", command=refresh_list)
+    O00O0O0000OOOOOOO .place (relx =0.12 ,rely =0.55 ,anchor ="w")#line:319:refrest_button.place(relx=0.12, rely=0.55, anchor="w")
+    OO00O00O0OOOO00OO =ttk .Button (O0OOO000OO00O0O00 ,text ="Save",command =OOOOO0000O0OO0OOO )#line:321:save_button = ttk.Button(cfgloader_tab, text="Save", command=save_config)
+    OO00O00O0OOOO00OO .place (relx =0.26 ,rely =0.55 ,anchor ="w")#line:322:save_button.place(relx=0.26, rely=0.55, anchor="w")
+    O000OOOOOO00O0OOO =ttk .Entry (O0OOO000OO00O0O00 ,width =30 )#line:324:config_entry = ttk.Entry(cfgloader_tab, width=30)
+    O000OOOOOO00O0OOO .place (relx =0.375 ,rely =0.55 ,anchor ="w")#line:325:config_entry.place(relx=0.375, rely=0.55, anchor="w")
+    OOOOOOOO0O0OO0O0O =ttk .Label (O0OOO000OO00O0O00 ,text ="Config loaded: None")#line:327:config_loaded_label = ttk.Label(cfgloader_tab, text="Config loaded: None")
+    OOOOOOOO0O0OO0O0O .place (relx =0.01 ,rely =0.64 ,anchor ="w")#line:328:config_loaded_label.place(relx=0.01, rely=0.64, anchor="w")
+    O0O00OOOO0O0O000O =tk .BooleanVar (value =False )#line:330:anti_recoil_checkbox_var = tk.BooleanVar(value=False)
+    O00000OO00000OO0O =ttk .Checkbutton (O00000OOO00000O0O ,text ="Anti-Recoil",variable =O0O00OOOO0O0O000O ,command =OOO0OOOOO00O00OO0 )#line:331:anti_recoil_checkbox = ttk.Checkbutton(configuration_tab, text="Anti-Recoil", variable=anti_recoil_checkbox_var, command=update_anti_recoil_state)
+    O00000OO00000OO0O .place (relx =0.01 ,rely =0.1 ,anchor ="w")#line:332:anti_recoil_checkbox.place(relx=0.01, rely=0.1, anchor="w")
+    O000OO0OOO00OO000 =tk .BooleanVar (value =False )#line:334:only_when_ads_checkbox_var = tk.BooleanVar(value=False)
+    O0O0OO0O00OO0OO0O =ttk .Checkbutton (O00000OOO00000O0O ,text ="Only When ADS",variable =O000OO0OOO00OO000 ,command =OO0OOOO0000O00O00 )#line:335:only_when_ads_checkbox = ttk.Checkbutton(configuration_tab, text="Only When ADS", variable=only_when_ads_checkbox_var, command=update_only_when_ads_state)
+    O0O0OO0O00OO0OO0O .place (relx =0.01 ,rely =0.2 ,anchor ="w")#line:336:only_when_ads_checkbox.place(relx=0.01, rely=0.2, anchor="w")
+    OO0OO000O0000O000 =ttk .Scale (O00000OOO00000O0O ,from_ =1 ,to =100 ,orient =tk .HORIZONTAL ,length =150 ,command =OO0O0000OO0O00OO0 )#line:338:y_recoil_slider = ttk.Scale(configuration_tab, from_=1, to=100, orient=tk.HORIZONTAL, length=150, command=update_y_recoil_value)
+    OO0OO000O0000O000 .place (relx =0.15 ,rely =0.40 ,anchor ="w")#line:339:y_recoil_slider.place(relx=0.15, rely=0.40, anchor="w")
+    ttk .Label (O00000OOO00000O0O ,text ="Y Recoil:",anchor ="e").place (relx =0.138 ,rely =0.39 ,anchor ="e")#line:341:ttk.Label(configuration_tab, text="Y Recoil:", anchor="e").place(relx=0.138, rely=0.39, anchor="e")
+    O00OOOOOOOO0O00O0 =ttk .Label (O00000OOO00000O0O ,text =f"{y_recoil} px")#line:343:y_recoil_value_label = ttk.Label(configuration_tab, text=f"{y_recoil} px")
+    O00OOOOOOOO0O00O0 .place (relx =0.465 ,rely =0.4 ,anchor ="w")#line:344:y_recoil_value_label.place(relx=0.465, rely=0.4, anchor="w")
+    O0OO0OO00OO000OOO =ttk .Scale (O00000OOO00000O0O ,from_ =0 ,to =100 ,orient =tk .HORIZONTAL ,length =150 ,command =OO0OOO0O0000O0O00 )#line:346:strength_slider = ttk.Scale(configuration_tab, from_=0, to=100, orient=tk.HORIZONTAL, length=150, command=update_strength_value)
+    O0OO0OO00OO000OOO .place (relx =0.15 ,rely =0.50 ,anchor ="w")#line:347:strength_slider.place(relx=0.15, rely=0.50, anchor="w")
+    ttk .Label (O00000OOO00000O0O ,text ="Strength:",anchor ="e").place (relx =0.138 ,rely =0.49 ,anchor ="e")#line:349:ttk.Label(configuration_tab, text="Strength:", anchor="e").place(relx=0.138, rely=0.49, anchor="e")
+    O0O000O000OO00O0O =ttk .Label (O00000OOO00000O0O ,text =f"{strength:.4f}")#line:351:strength_value_label = ttk.Label(configuration_tab, text=f"{strength:.4f}")
+    O0O000O000OO00O0O .place (relx =0.465 ,rely =0.50 ,anchor ="w")#line:352:strength_value_label.place(relx=0.465, rely=0.50, anchor="w")
+    OO0OO0O0OO00O0O00 =ttk .Scale (O00000OOO00000O0O ,from_ =-100 ,to =100 ,orient =tk .HORIZONTAL ,length =150 ,command =O0OOO000OOO0OO0O0 )#line:354:x_recoil_slider = ttk.Scale(configuration_tab, from_=-100, to=100, orient=tk.HORIZONTAL, length=150, command=update_x_recoil_value)
+    OO0OO0O0OO00O0O00 .place (relx =0.15 ,rely =0.30 ,anchor ="w")#line:355:x_recoil_slider.place(relx=0.15, rely=0.30, anchor="w")
+    ttk .Label (O00000OOO00000O0O ,text ="X Recoil:",anchor ="e").place (relx =0.138 ,rely =0.29 ,anchor ="e")#line:357:ttk.Label(configuration_tab, text="X Recoil:", anchor="e").place(relx=0.138, rely=0.29, anchor="e")
+    OOO0OOO0000O0OO0O =ttk .Label (O00000OOO00000O0O ,text =f"{x_recoil} px")#line:359:x_recoil_value_label = ttk.Label(configuration_tab, text=f"{x_recoil} px")
+    OOO0OOO0000O0OO0O .place (relx =0.465 ,rely =0.30 ,anchor ="w")#line:360:x_recoil_value_label.place(relx=0.465, rely=0.30, anchor="w")
+    O0OOO00000OOO0000 =ttk .Button (O000OOOOO0OO0OO00 ,text ="X",command =O0OO00O0O000O0OO0 )#line:362:close_button = ttk.Button(root, text="X", command=close_window)
+    O0OOO00000OOO0000 .place (x =OO0OOOO000OOO000O -37 ,y =6 )#line:363:close_button.place(x=window_width-37, y=6)
+    threading .Thread (target =O000O000OO0OO0OOO ).start ()#line:365:threading.Thread(target=update_fps_label).start()
+    threading .Thread (target =O0O0O0O0O0O00O00O ).start ()#line:366:threading.Thread(target=update_color_value_label).start()
+    O000OOOOO0OO0OO00 .bind ("<B1-Motion>",OO000O0O0O00O0O00 )#line:368:root.bind("<B1-Motion>", move_window)
+    O000OOOOO0OO0OO00 .bind ("<ButtonPress-1>",OO00000OOOO0OOOO0 )#line:369:root.bind("<ButtonPress-1>", start_move)
+    OOOOO0O00O0O0OOOO ()#line:371:refresh_list()
+    O000OOOOO0OO0OO00 .mainloop ()#line:372:root.mainloop()
+if __name__ =="__main__":#line:374:if __name__ == "__main__":
+    main ()#line:375:main()
+    main_gui ()#line:376:main_gui()
